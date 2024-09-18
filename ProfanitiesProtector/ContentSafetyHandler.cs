@@ -29,5 +29,14 @@ namespace ProfanitiesProtector
             return analysisResult.Value;
         }
 
+        public async Task<AnalyzeImageResult> AnalyzeImageAsync(string imageUrl)
+        {
+            ContentSafetyImageData image = new ContentSafetyImageData(BinaryData.FromBytes(File.ReadAllBytes(imageUrl)));
+
+            var request = new AnalyzeImageOptions(image);
+            var analysisResult = await _contentSafetyClient.AnalyzeImageAsync(request);
+            return analysisResult;
+        }
+
     }
 }

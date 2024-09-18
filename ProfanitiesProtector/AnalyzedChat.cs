@@ -36,11 +36,26 @@ public class AnalyzedChat
     public async Task AnalyzeChatAsync(UnanalyzedChat chat)
     {
         AnalyzeTextResult analysisResult;
+        AnalyzeImageResult analyzeImageResult;
+
         foreach (var message in chat.Messages)
         {
             analysisResult = await AnalyzeText(message.Content);
-            
-            if ( IsOffensive(analysisResult)  )
+
+            if (!string.IsNullOrEmpty(message.ImageUrl))
+            {
+                analyzeImageResult = await _contentSafetyHandler.AnalyzeImageAsync(message.ImageUrl);
+
+                foreach(var category in analyzeImageResult.CategoriesAnalysis)
+                {
+                    if(category.Severity > 0)
+                    {
+                        DetectedMessages.Add(message);
+                    }
+                }
+            }
+
+            if (IsOffensive(analysisResult))
             {
                 foreach (var categoriesAnalysis in analysisResult.CategoriesAnalysis)
                 {

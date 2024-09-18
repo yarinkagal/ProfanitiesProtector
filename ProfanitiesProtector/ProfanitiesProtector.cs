@@ -17,6 +17,7 @@ namespace ProfanitiesProtector
     {
         public required string Content { get; set; }
         public bool SentByTheChild { get; set; }
+        public string? ImageUrl { get; set; }
     }
 
     
