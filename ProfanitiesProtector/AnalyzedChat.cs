@@ -46,12 +46,9 @@ public class AnalyzedChat
             {
                 analyzeImageResult = await _contentSafetyHandler.AnalyzeImageAsync(message.ImageUrl);
 
-                foreach(var category in analyzeImageResult.CategoriesAnalysis)
+                if (IsOffensive(analyzeImageResult))
                 {
-                    if(category.Severity > 0)
-                    {
-                        DetectedMessages.Add(message);
-                    }
+                    DetectedMessages.Add(message);
                 }
             }
 
@@ -84,9 +81,15 @@ public class AnalyzedChat
             }
         }
     }
+
     private bool IsOffensive(AnalyzeTextResult analysisResult)
     {
         return analysisResult.CategoriesAnalysis.Any(c => c.Severity >0);
+    }
+
+    private bool IsOffensive(AnalyzeImageResult analysisResult)
+    {
+        return analysisResult.CategoriesAnalysis.Any(c => c.Severity > 0);
     }
 
     public class TextAnalysisObject
