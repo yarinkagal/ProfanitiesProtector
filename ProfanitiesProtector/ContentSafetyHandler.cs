@@ -8,7 +8,7 @@ namespace ProfanitiesProtector
         private readonly ContentSafetyClient _contentSafetyClient;
 
         private const string ContentSafetyEndpoint = "https://profanitiesprotector-contentsafety.cognitiveservices.azure.com";
-        private const string ContentSafetyKey = "5b0ab5b1d3e443cd9757ebd50f4dc589";
+        private string ContentSafetyKey = Environment.GetEnvironmentVariable("ContentSafetyKey") ?? "5b0ab5b1d3e443cd9757ebd50f4dc589";
 
         public ContentSafetyHandler()
         {
@@ -29,9 +29,9 @@ namespace ProfanitiesProtector
             return analysisResult.Value;
         }
 
-        public async Task<AnalyzeImageResult> AnalyzeImageAsync(string imageUrl)
+        public async Task<AnalyzeImageResult> AnalyzeImageAsync(string imageData)
         {
-            ContentSafetyImageData image = new ContentSafetyImageData(BinaryData.FromBytes(File.ReadAllBytes(imageUrl)));
+            ContentSafetyImageData image = new ContentSafetyImageData(new BinaryData(imageData));
 
             var request = new AnalyzeImageOptions(image);
             var analysisResult = await _contentSafetyClient.AnalyzeImageAsync(request);

@@ -3,6 +3,7 @@
 using Azure.Storage.Blobs;
 
 using System.Text.Json;
+using System.Net;
 
 namespace ProfanitiesProtector
 {
@@ -20,27 +21,36 @@ namespace ProfanitiesProtector
             _blobServiceClient = new BlobServiceClient(connectionString);
         }
 
-        private static List<User> Users = new List<User>
-        {
-            new User("john.doe@example.com", new Dictionary<string, string> { { "Jane", "jane.smith@example.com" } }),
-            new User("jane.smith@example.com", new Dictionary<string, string> { { "John", "john.doe@example.com" } })
-        };
-
-        [HttpGet]
-        public ActionResult<IEnumerable<User>> GetUsers()
-        {
-            return Ok(Users);
-        }
+    
 
         [HttpGet("{email}")]
-        public ActionResult<User> GetUser(string email)
+        public async Task<ActionResult<User> > GetUser(string email)
         {
-            var user = Users.FirstOrDefault(u => u.Email == email);
-            if (user == null)
+            var containerName = "analyzedchats";
+            BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
+
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+            await blobContainerClient.CreateIfNotExistsAsync();
+
+            var blobClient = blobContainerClient.GetBlobClient(blobName: email);
+
+            HashSet<AnalyzedChat> analyzedChats;
+            try
             {
-                return NotFound();
+                var analyzedChatsStreamBlob = await blobClient.DownloadAsync();
+                var analyzedChatsStream = analyzedChatsStreamBlob.Value.Content;
+
+                using (var reader = new StreamReader(analyzedChatsStream))
+                {
+                    var content = await reader.ReadToEndAsync();
+                    analyzedChats = JsonSerializer.Deserialize<HashSet<AnalyzedChat>>(content);
+                }
             }
-            return Ok(user);
+            catch (Azure.RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.NotFound)
+            {
+            }
+
+            return Ok();
         }
 
         [HttpPost]
@@ -74,26 +84,14 @@ namespace ProfanitiesProtector
     [HttpPut("{email}")]
         public ActionResult UpdateUser(string email, User updatedUser)
         {
-            var user = Users.FirstOrDefault(u => u.Email == email);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            user.Contacts = updatedUser.Contacts;
+            
             return NoContent();
         }
 
         [HttpDelete("{email}")]
         public ActionResult DeleteUser(string email)
         {
-            var user = Users.FirstOrDefault(u => u.Email == email);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            Users.Remove(user);
+            
             return NoContent();
         }
     }

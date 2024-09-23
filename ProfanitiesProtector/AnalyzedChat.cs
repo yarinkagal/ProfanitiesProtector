@@ -1,12 +1,14 @@
 using Azure.AI.ContentSafety;
 namespace ProfanitiesProtector;
-
-using System.Runtime.Serialization;
+using System.Linq;
 using System.Text.Json.Serialization;
 public class AnalyzedChat
 {
     public string ChatName { get; set; }
-    public List<Message> DetectedMessages { get; set; }
+    public List<string> DetectedMessagesIn { get; set; }
+    public List<string> DetectedMessagesOut { get; set; }
+    public List<string> DetectedImagesIn { get; set; }
+    public List<string> DetectedImagesOut { get; set; }
 
     public List<TextAnalysisObject> CategoriesAnalysis { get; set; }
     [JsonIgnore]
@@ -16,75 +18,101 @@ public class AnalyzedChat
     public AnalyzedChat(string chatName)
     {
         ChatName = chatName;
-        DetectedMessages = new List<Message>();
+        DetectedMessagesIn = new List<string>();
+        DetectedMessagesOut = new List<string>();
+        DetectedImagesIn = new List<string>();
+        DetectedImagesOut = new List<string>();
         _contentSafetyHandler = new ContentSafetyHandler();
         CategoriesAnalysis = new List<TextAnalysisObject>();
     }
 
     public bool HasProfanities()
     {
-        return DetectedMessages.Count > 0;
+        return DetectedMessagesIn.Any() ||
+                DetectedMessagesOut.Any() ||
+                DetectedImagesIn.Any() ||
+                DetectedImagesOut.Any();
     }
 
     public async Task<AnalyzeTextResult> AnalyzeText( string inputText)
     {
+        if(inputText.Length == 0)
+        {
+            return null;
+        }
         var analysisResult = await _contentSafetyHandler.AnalyzeTextAsync(inputText);
 
         return analysisResult;
     }
 
-    public async Task AnalyzeChatAsync(UnanalyzedChat chat)
+    public void UpdateCategories(dynamic analyzeResult)
     {
-        AnalyzeTextResult analysisResult;
-        AnalyzeImageResult analyzeImageResult;
-
-        foreach (var message in chat.Messages)
+        foreach (var categoriesAnalysis in analyzeResult.CategoriesAnalysis)
         {
-            analysisResult = await AnalyzeText(message.Content);
-
-            if (!string.IsNullOrEmpty(message.ImageUrl))
+            if (categoriesAnalysis != null)
             {
-                analyzeImageResult = await _contentSafetyHandler.AnalyzeImageAsync(message.ImageUrl);
+                var categoryName = categoriesAnalysis.Category.ToString();
+                var severity = categoriesAnalysis.Severity ?? 0; // Default to 0 if null
 
-                if (IsOffensive(analyzeImageResult))
+                var categoryObject = CategoriesAnalysis.FirstOrDefault(c => c.Category == categoryName);
+
+                if (categoryObject != null)
                 {
-                    DetectedMessages.Add(message);
+                    categoryObject.Severity = Math.Max(categoryObject.Severity, severity);
                 }
-            }
-
-            if (IsOffensive(analysisResult))
-            {
-                foreach (var categoriesAnalysis in analysisResult.CategoriesAnalysis)
+                else
                 {
-                    if (categoriesAnalysis != null)
+                    CategoriesAnalysis.Add(new TextAnalysisObject
                     {
-                        var categoryName = categoriesAnalysis.Category.ToString();
-                        var severity = categoriesAnalysis.Severity ?? 0; // Default to 0 if null
-
-                        var categoryObject = CategoriesAnalysis.FirstOrDefault(c => c.Category == categoryName);
-
-                        if (categoryObject != null)
-                        {
-                            categoryObject.Severity = Math.Max(categoryObject.Severity, severity);
-                        }
-                        else
-                        {
-                            CategoriesAnalysis.Add(new TextAnalysisObject
-                            {
-                                Category = categoryName,
-                                Severity = severity
-                            });
-                        }
-                    }
+                        Category = categoryName,
+                        Severity = severity
+                    });
                 }
-                DetectedMessages.Add(message);
             }
         }
     }
 
+    public async Task<List<string>> AnalyzeImagesAsync(List<string> images)
+    {
+        AnalyzeImageResult analyzeImageResult;
+        var DetectedImages = new List<string>();
+        foreach(var image in images)
+        {
+            analyzeImageResult = await _contentSafetyHandler.AnalyzeImageAsync(image);
+
+            if (IsOffensive(analyzeImageResult))
+            {
+                UpdateCategories(analyzeImageResult);
+                DetectedImages.Add(image);
+            }
+        }
+        
+        return DetectedImages;
+    }
+
+    public async Task<List<string>> AnalyzeMessagesAsync(List<string> messages)
+    {
+        AnalyzeTextResult analysisResult;
+        AnalyzeImageResult analyzeImageResult;
+        var DetectedMessages = new List<string>();
+
+        foreach (var message in messages)
+        {
+            analysisResult = await AnalyzeText(message);
+
+            if (IsOffensive(analysisResult))
+            {
+                UpdateCategories(analysisResult);
+                DetectedMessages.Add(message);
+            }
+        }
+
+        return DetectedMessages;
+    }
+
     private bool IsOffensive(AnalyzeTextResult analysisResult)
     {
-        return analysisResult.CategoriesAnalysis.Any(c => c.Severity >0);
+        return analysisResult!= null && analysisResult.CategoriesAnalysis.Any(c => c.Severity >0);
     }
 
     private bool IsOffensive(AnalyzeImageResult analysisResult)

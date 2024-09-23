@@ -11,57 +11,10 @@ namespace ProfanitiesProtector
     public class ProfanitiesProtectorController : ControllerBase
     {
 
-        private readonly ILogger<ProfanitiesProtectorController> _logger;
-
-        public ProfanitiesProtectorController(ILogger<ProfanitiesProtectorController> logger)
+        public EmailService EmailService;
+        public ProfanitiesProtectorController()
         {
-            _logger = logger;
-        }
-
-
-
-        [HttpGet]
-        [Route("")]
-        public async Task<AnalyzedChat> AnalyzedChatGet()
-        {
-            var textToModerate = "Is בת זונה a grabage email bitch abcdef@abcd.com, phone: 4255550111, IP: 255.255.255.255, 1234 Main Boulevard, Panapolis WA 96555.\r\n<offensive word> is the profanity here. Is this information PII? phone 4255550111";
-
-
-            List<Message> messages = new List<Message>();
-            messages.Add(new Message()
-            {
-                Content = "בן זונה",
-                SentByTheChild = true
-            });
-
-            messages.Add(new Message()
-            {
-                Content = "אוהב אותך",
-                SentByTheChild = false
-            });
-
-            messages.Add(new Message()
-            {
-                Content = "hello",
-                SentByTheChild = true
-            });
-
-            UnanalyzedChat chat = new UnanalyzedChat(name: "name1","yarink3@gmail.com", messages);
-
-
-            if (chat == null)
-            {
-                throw new ArgumentNullException(nameof(chat));
-            }
-
-
-            var analyzedChat = new AnalyzedChat(chat.ChatName);
-            await analyzedChat.AnalyzeChatAsync(chat);
-            await AddChatToUserChats(chat.Email, analyzedChat);
-
-
-            return await Task.FromResult(analyzedChat);
-
+            EmailService = new EmailService();
         }
 
         [HttpPost]
@@ -73,17 +26,28 @@ namespace ProfanitiesProtector
                 throw new ArgumentNullException(nameof(chat));
             }
 
+            var DetectedChats = new List<AnalyzedChat>();
+            foreach (var content in chat.Content) {
+                var analyzedChat = new AnalyzedChat(content.ChatName);
+                analyzedChat.DetectedMessagesIn = await analyzedChat.AnalyzeMessagesAsync(content.MessagesIn);
+                analyzedChat.DetectedMessagesOut = await analyzedChat.AnalyzeMessagesAsync(content.MessagesOut);
+                analyzedChat.DetectedImagesIn = await analyzedChat.AnalyzeImagesAsync(content.ImagesIn);
+                analyzedChat.DetectedImagesOut = await analyzedChat.AnalyzeImagesAsync(content.ImagesOut);
 
-            var analyzedChat = new AnalyzedChat(chat.ChatName);
-            await analyzedChat.AnalyzeChatAsync(chat);
-            if (analyzedChat.HasProfanities())
-            {
-                AddChatToUserChats(chat.Email, analyzedChat);
+                if (analyzedChat.HasProfanities())
+                {
+                    DetectedChats.Add(analyzedChat);
+
+                }
             }
+
+            DetectedChats.ForEach(detectedChat => EmailService.SendEmail(chat.Email, detectedChat));
+
+            AddChatsToUserChats(chat.Email, DetectedChats);
 
         }
 
-        public async Task AddChatToUserChats(string email, AnalyzedChat newChat)
+        public async Task AddChatsToUserChats(string email, List<AnalyzedChat> DetectedChats)
         {
             string connectionString = Environment.GetEnvironmentVariable("connectionString");
 
@@ -103,17 +67,17 @@ namespace ProfanitiesProtector
             {
                 var analyzedChatsStreamBlob = await blobClient.DownloadAsync();
                 var analyzedChatsStream = analyzedChatsStreamBlob.Value.Content;
-
+                
                 using (var reader = new StreamReader(analyzedChatsStream))
                 {
                     var content = await reader.ReadToEndAsync();
                     analyzedChats = JsonSerializer.Deserialize<HashSet<AnalyzedChat>>(content);
                 }
-                analyzedChats.Add(newChat);
+                analyzedChats.Concat(DetectedChats);
             }
             catch (Azure.RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.NotFound)
             {
-                analyzedChats = new HashSet<AnalyzedChat> { newChat };
+                analyzedChats = DetectedChats.ToHashSet();
             }
 
             var analyzedChatsJson = JsonSerializer.Serialize(analyzedChats);

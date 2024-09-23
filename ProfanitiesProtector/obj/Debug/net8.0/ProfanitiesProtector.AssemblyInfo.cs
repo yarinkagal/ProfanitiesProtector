@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ProfanitiesProtector")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5e3e31b480a24f9a74be2632a95abd1549ebcdb9")]
 [assembly: System.Reflection.AssemblyProductAttribute("ProfanitiesProtector")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ProfanitiesProtector")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

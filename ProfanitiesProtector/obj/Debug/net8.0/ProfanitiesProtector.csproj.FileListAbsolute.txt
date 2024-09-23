@@ -39,3 +39,4 @@ C:\Users\yarinkagal\OneDrive - Microsoft\Desktop\Work\Hackaton\2024\ProfanitiesP
 C:\Users\yarinkagal\OneDrive - Microsoft\Desktop\Work\Hackaton\2024\ProfanitiesProtector\ProfanitiesProtector\bin\Debug\net8.0\Azure.Storage.Common.dll
 C:\Users\yarinkagal\OneDrive - Microsoft\Desktop\Work\Hackaton\2024\ProfanitiesProtector\ProfanitiesProtector\bin\Debug\net8.0\System.ClientModel.dll
 C:\Users\yarinkagal\OneDrive - Microsoft\Desktop\Work\Hackaton\2024\ProfanitiesProtector\ProfanitiesProtector\bin\Debug\net8.0\System.IO.Hashing.dll
+C:\Users\yarinkagal\OneDrive - Microsoft\Desktop\Work\Hackaton\2024\ProfanitiesProtector\ProfanitiesProtector\obj\Debug\net8.0\ProfanitiesProtector.sourcelink.json

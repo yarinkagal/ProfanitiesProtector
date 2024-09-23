@@ -1,4 +1,5 @@
 
+using System.Buffers.Text;
 using System.ComponentModel.DataAnnotations;
 
 namespace ProfanitiesProtector
@@ -13,29 +14,40 @@ namespace ProfanitiesProtector
 
     }
 
-    public class Message
-    {
-        public required string Content { get; set; }
-        public bool SentByTheChild { get; set; }
-        public string? ImageUrl { get; set; }
-    }
-
-    
-
-    public class UnanalyzedChat
+    public class UnanalyzedChatContent
     {
         public string ChatName { get; set; }
-        public List<Message> Messages { get; set; }
+        public List<string> MessagesIn { get; set; }
+        public List<string> MessagesOut { get; set; }
+        public List<string> ImagesIn { get; set; }
+        public List<string> ImagesOut { get; set; }
+
+        public UnanalyzedChatContent(string ChatName, List<string> MessagesIn, List<string> MessagesOut, List<string> ImagesIn, List<string> ImagesOut  )
+        {
+            ChatName = ChatName;
+            MessagesIn = new List<string>(MessagesIn);
+            MessagesOut = new List<string>(MessagesOut);
+            ImagesIn = ImagesIn;
+            ImagesOut = ImagesOut;
+        }
+
+        public UnanalyzedChatContent() { }
+    }
+    public class UnanalyzedChat
+    {
+        
+        public List<UnanalyzedChatContent> Content { get; set; }
         public string Email { get; set; }
 
         // Parameterless constructor for deserialization
         public UnanalyzedChat() { }
 
-        public UnanalyzedChat(string name,string email, List<Message> messages)
+        public UnanalyzedChat(string Email, List<UnanalyzedChatContent> Content )
         {
-            ChatName = name;
-            Messages = new List<Message>(messages);
-            Email = email;
+            Email = Email;
+            Content = Content;
+
+
         }
     }
 

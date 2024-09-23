@@ -39,3 +39,4 @@ C:\Users\yarinkagal\OneDrive - Microsoft\Desktop\Work\Hackaton\2024\ProfanitiesP
 C:\Users\yarinkagal\OneDrive - Microsoft\Desktop\Work\Hackaton\2024\ProfanitiesProtector\ProfanitiesProtector\obj\Release\net8.0\ProfanitiesProtector.pdb
 C:\Users\yarinkagal\OneDrive - Microsoft\Desktop\Work\Hackaton\2024\ProfanitiesProtector\ProfanitiesProtector\obj\Release\net8.0\ProfanitiesProtector.genruntimeconfig.cache
 C:\Users\yarinkagal\OneDrive - Microsoft\Desktop\Work\Hackaton\2024\ProfanitiesProtector\ProfanitiesProtector\obj\Release\net8.0\ref\ProfanitiesProtector.dll
+C:\Users\yarinkagal\OneDrive - Microsoft\Desktop\Work\Hackaton\2024\ProfanitiesProtector\ProfanitiesProtector\obj\Release\net8.0\ProfanitiesProtector.sourcelink.json
