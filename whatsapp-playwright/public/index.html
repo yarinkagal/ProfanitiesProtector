@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Input for ProfanitiesProtector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f4f8;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333333;
+        }
+        input {
+            padding: 15px;
+            margin: 15px 0;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            padding: 15px;
+            width: 100%;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .title {
+            margin-bottom: 40px;
+            font-size: 48px;
+            color: #4CAF50;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .loading {
+            display: none;
+            font-size: 20px;
+            color: #007BFF;
+            text-align: center;
+        }
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #007BFF;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message {
+            display: none;
+            font-size: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">ProfanitiesProtector</div>
+    <div class="container" id="form-container">
+        <h1>Enter Your Email</h1>
+        <input type="email" id="email" placeholder="Email" required>
+        <button onclick="sendEmail()">Submit</button>
+    </div>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        Loading... Please wait
+    </div>
+    <div class="message" id="message"></div>
+
+    <script>
+        function sendEmail() {
+            const email = document.getElementById('email').value;
+            const formContainer = document.getElementById('form-container');
+            const loading = document.getElementById('loading');
+            const message = document.getElementById('message');
+
+            if (email) {
+                formContainer.style.display = 'none';
+                loading.style.display = 'block';
+                message.style.display = 'none';
+
+                fetch('/submit-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    message.style.display = 'block';
+                    message.style.color = '#28a745'; // Success message color
+                    message.textContent = data.message;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loading.style.display = 'none';
+                    message.style.display = 'block';
+                    message.style.color = '#dc3545'; // Error message color
+                    message.textContent = 'An error occurred. Please try again.';
+                });
+            } else {
+                message.style.display = 'block';
+                message.style.color = '#dc3545'; // Error message color
+                message.textContent = 'Please enter a valid email.';
+            }
+        }
+    </script>
+</body>
+</html>
